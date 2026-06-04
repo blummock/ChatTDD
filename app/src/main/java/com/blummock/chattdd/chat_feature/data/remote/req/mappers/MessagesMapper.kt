@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.data.mappers
+package com.blummock.chattdd.chat_feature.data.remote.req.mappers
 
 //import com.blummock.chattdd.chat_feature.data.dto.MessageDto
 //import com.blummock.chattdd.chat_feature.data.dto.MessageStatus

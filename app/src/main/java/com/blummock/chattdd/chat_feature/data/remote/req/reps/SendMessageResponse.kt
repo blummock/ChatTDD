@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.data.reps
+package com.blummock.chattdd.chat_feature.data.remote.req.reps
 
 //data class SendMessageResponse(
 //    val messageId: String,

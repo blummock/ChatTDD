@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.data.repositories
+package com.blummock.chattdd.chat_feature.data.remote.req.repositories
 
 //import com.blummock.chattdd.chat_feature.data.api.MessengerApi
 //import com.blummock.chattdd.chat_feature.data.mappers.ExceptionMapper

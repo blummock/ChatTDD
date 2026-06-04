@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.data.dto
+package com.blummock.chattdd.chat_feature.data.remote.req.dto
 
 //internal data class MessageDto(
 //    val id: String,
