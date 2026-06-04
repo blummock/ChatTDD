@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "ChatTDD"
 include(":app")
-include(":chat_feature")
