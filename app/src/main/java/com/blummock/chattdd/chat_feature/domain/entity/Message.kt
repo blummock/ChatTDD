@@ -6,6 +6,7 @@ sealed interface Message {
     val senderId: String
     val timestamp: Long
     val status: MessageStatus
+    val isMine: Boolean
 
     enum class MessageStatus {
         SENDING,
@@ -20,5 +21,6 @@ data class TextMessage(
     override val senderId: String,
     override val timestamp: Long,
     override val status: Message.MessageStatus,
+    override val isMine: Boolean,
     val text: String,
 ) : Message

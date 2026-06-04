@@ -54,6 +54,7 @@ class ChatViewModelTests {
                 senderId = "nascetur",
                 timestamp = 1780457123,
                 status = Message.MessageStatus.DELIVERED,
+                isMine = false,
                 text = "ignota"
             ),
             TextMessage(
@@ -62,6 +63,7 @@ class ChatViewModelTests {
                 senderId = "meliore",
                 timestamp = 1780457123,
                 status = Message.MessageStatus.SENDING,
+                isMine = true,
                 text = "tale"
             )
         )
@@ -72,7 +74,8 @@ class ChatViewModelTests {
         val expected = listOfMessages.map {
             TextMessageModel(
                 id = it.id,
-                timestamp = time.next(),
+                time = time.next(),
+                isMine = it.isMine,
                 status = status.next(),
                 text = it.text
             )

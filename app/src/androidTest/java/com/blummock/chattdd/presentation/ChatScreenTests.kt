@@ -103,6 +103,7 @@ class ChatScreenTests {
                 senderId = "persius",
                 timestamp = 8115,
                 status = Message.MessageStatus.DELIVERED,
+                isMine = false,
                 text = "appetere"
             ),
             TextMessage(
@@ -111,6 +112,7 @@ class ChatScreenTests {
                 senderId = "risus",
                 timestamp = 4332,
                 status = Message.MessageStatus.ERROR,
+                isMine = true,
                 text = "erroribus"
             ),
             TextMessage(
@@ -119,6 +121,7 @@ class ChatScreenTests {
                 senderId = "proin",
                 timestamp = 2816,
                 status = Message.MessageStatus.SENDING,
+                isMine = true,
                 text = "pellentesque"
             ),
             TextMessage(
@@ -127,6 +130,7 @@ class ChatScreenTests {
                 senderId = "parturient",
                 timestamp = 9581,
                 status = Message.MessageStatus.SENDING,
+                isMine = true,
                 text = "vitae"
             )
         )
