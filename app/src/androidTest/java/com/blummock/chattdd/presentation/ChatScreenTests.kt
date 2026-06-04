@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.blummock.chattdd.chat_feature.core.TimeConverter
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 import com.blummock.chattdd.chat_feature.domain.entity.Message
@@ -45,7 +46,7 @@ class ChatScreenTests {
 
     @Before
     fun setup() {
-        mapper = UiMapper()
+        mapper = UiMapper(FakeTimeConverter())
         viewModel = ChatViewModel(
             uiMapper = mapper,
             savedStateHandle = SavedStateHandle(),
@@ -190,6 +191,10 @@ class ChatScreenTests {
             }
         }
     }
+}
+
+private class FakeTimeConverter : TimeConverter {
+    override fun toHHmm(millis: Long) = millis.toString()
 }
 
 private class FakeMessagesRepository : MessagesRepository {

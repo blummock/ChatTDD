@@ -1,6 +1,7 @@
 package com.blummock.chattdd.chat_feature.presentation.vm
 
 import androidx.lifecycle.SavedStateHandle
+import com.blummock.chattdd.chat_feature.core.TimeConverter
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 import com.blummock.chattdd.chat_feature.domain.entity.Message
@@ -9,9 +10,7 @@ import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
-import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageStatusUi
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
-import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +29,7 @@ class ChatViewModelTests {
     private lateinit var messagesRepository: FakeMessagesRepository
     private lateinit var observeMessagesUseCase: ObserveMessagesUseCase
     private lateinit var sendMessageUseCase: SendMessageUseCase
+    private lateinit var mapper: UiMapper
 
     @Before
     fun setup() {
@@ -37,8 +37,9 @@ class ChatViewModelTests {
         messagesRepository = FakeMessagesRepository()
         observeMessagesUseCase = ObserveMessagesUseCase(messagesRepository)
         sendMessageUseCase = SendMessageUseCase(messagesRepository)
+        mapper = UiMapper(FakeTimeConverter())
         viewModel = ChatViewModel(
-            uiMapper = UiMapper(),
+            uiMapper = mapper,
             savedStateHandle = savedStateHandle,
             observeMessagesUseCase = observeMessagesUseCase,
             sendMessageUseCase = sendMessageUseCase,
@@ -67,19 +68,9 @@ class ChatViewModelTests {
                 text = "tale"
             )
         )
-        val time = listOf("03:25", "03:42").iterator()
-        val status = listOf(MessageStatusUi.DELIVERED, MessageStatusUi.SENDING).iterator()
         assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
         messagesRepository.messagesState.emit(MessagesState.Data(listOfMessages))
-        val expected = listOfMessages.map {
-            TextMessageModel(
-                id = it.id,
-                time = time.next(),
-                isMine = it.isMine,
-                status = status.next(),
-                text = it.text
-            )
-        }
+        val expected = listOfMessages.map { mapper.toUi(it) }
         assertEquals(MessagesUiState.Data(expected), viewModel.state.value.messagesUiState)
     }
 
@@ -145,6 +136,10 @@ class ChatViewModelTests {
         assertTrue(viewModel.state.value.sendButtonEnabled)
         assertEquals(testText, viewModel.state.value.messageInput)
     }
+}
+
+private class FakeTimeConverter : TimeConverter {
+    override fun toHHmm(millis: Long) = millis.toString()
 }
 
 private class FakeMessagesRepository : MessagesRepository {
