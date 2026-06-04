@@ -9,7 +9,6 @@ sealed interface Message {
 
     enum class MessageStatus {
         SENDING,
-        SENT,
         DELIVERED,
         ERROR,
     }

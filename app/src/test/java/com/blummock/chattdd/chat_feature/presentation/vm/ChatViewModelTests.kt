@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.presentation
+package com.blummock.chattdd.chat_feature.presentation.vm
 
 import androidx.lifecycle.SavedStateHandle
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
@@ -9,8 +9,6 @@ import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
-import com.blummock.chattdd.chat_feature.presentation.vm.ChatEffect
-import com.blummock.chattdd.chat_feature.presentation.vm.ChatViewModel
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageStatusUi
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
 import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
@@ -40,6 +38,7 @@ class ChatViewModelTests {
         observeMessagesUseCase = ObserveMessagesUseCase(messagesRepository)
         sendMessageUseCase = SendMessageUseCase(messagesRepository)
         viewModel = ChatViewModel(
+            uiMapper = UiMapper(),
             savedStateHandle = savedStateHandle,
             observeMessagesUseCase = observeMessagesUseCase,
             sendMessageUseCase = sendMessageUseCase,
@@ -145,7 +144,7 @@ class ChatViewModelTests {
     }
 }
 
-class FakeMessagesRepository : MessagesRepository {
+private class FakeMessagesRepository : MessagesRepository {
 
     val messagesState = MutableSharedFlow<MessagesState>()
     lateinit var postMessageResult: ChatResult<Unit>
