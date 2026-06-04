@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.presentation.ui
+package com.blummock.chattdd.presentation
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
