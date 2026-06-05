@@ -67,8 +67,8 @@ class MessagesRepositoryTest {
                 chatId = "alterum",
                 senderId = "posidonium",
                 timestamp = 9171,
-                type = MessageType.TEXT,
-                status = MessageStatus.SENDING,
+                type = MessageEntity.MessageType.TEXT,
+                status = MessageEntity.MessageStatus.SENDING,
                 text = "persecuti",
                 imageUrl = "https://www.google.com/#q=cursus"
             )
@@ -90,7 +90,7 @@ class MessagesRepositoryTest {
             )
         )
         fakeMessagesApi.flow.emit(dto)
-        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(it, userId) })
+        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
         assertEquals(expected2, messages[1])
     }
 
@@ -115,15 +115,15 @@ class MessagesRepositoryTest {
                 chatId = "alterum",
                 senderId = "posidonium",
                 timestamp = 9171,
-                type = MessageType.TEXT,
-                status = MessageStatus.SENDING,
+                type = MessageEntity.MessageType.TEXT,
+                status = MessageEntity.MessageStatus.SENDING,
                 text = "persecuti",
                 imageUrl = "https://www.google.com/#q=cursus"
             )
         )
         fakeMessagesDao.flow.emit(entities)
         val userId = fakeUserInfoRepository.getUserInfo().data
-        val expected = MessagesState.Error(DomainError.UnknownError, entities.map { mapper.toDomain(it, userId) }, )
+        val expected = MessagesState.Error(DomainError.UnknownError, entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected, messages[0])
     }
 
@@ -158,7 +158,7 @@ class MessagesRepositoryTest {
             )
         )
         fakeMessagesApi.flow.emit(dto)
-        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(it, userId) })
+        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
         assertEquals(expected2, messages[1])
     }
 
