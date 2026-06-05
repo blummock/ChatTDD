@@ -4,44 +4,40 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.activity.viewModels
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.blummock.chattdd.chat_feature.core.TimeConverter
+import com.blummock.chattdd.chat_feature.presentation.ui.ChatScreen
+import com.blummock.chattdd.chat_feature.presentation.vm.ChatViewModel
+import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
 import com.blummock.chattdd.ui.theme.ChatTDDTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val provider by lazy(LazyThreadSafetyMode.NONE) { (application as App).useCasesProvider }
+
+    private val viewModel: ChatViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                ChatViewModel(
+                    savedStateHandle = createSavedStateHandle(),
+                    observeMessagesUseCase = provider.observeMessagesUseCase(),
+                    sendMessageUseCase = provider.sendMessageUseCase(),
+                    uiMapper = UiMapper(TimeConverter.Base())
+                )
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ChatTDDTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                ChatScreen(viewModel)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ChatTDDTheme {
-        Greeting("Android")
     }
 }

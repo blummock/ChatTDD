@@ -1,7 +1,11 @@
 package com.blummock.chattdd.chat_feature.data.local.models
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "messages")
 internal data class MessageEntity(
-    val id: String,
+    @PrimaryKey val id: String,
     val chatId: String,
     val senderId: String,
     val timestamp: Long,

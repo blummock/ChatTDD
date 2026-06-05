@@ -49,6 +49,9 @@ internal class MessagesRepositoryImpl(
                 waitApi.await()
             }
             errorStateFlow.combine(messagesDao.observeMessages()) { errorState, messages ->
+                if (messages.isEmpty()) {
+                    waitApi.await()
+                }
                 val domainMessages = messages.map { mapper.toDomain(it, userId) }
                 if (errorState == null) {
                     MessagesState.Data(domainMessages)
@@ -60,6 +63,7 @@ internal class MessagesRepositoryImpl(
         launch {
             try {
                 messagesApi.observeMessages().collect { messages ->
+                    waitApi.complete(Unit)
                     messagesDao.clearAndInsertMessages(messages.map { mapper.toLocal(it) })
                     waitApi.complete(Unit)
                 }

@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -53,6 +53,8 @@ import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageUiModel
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
 import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +67,7 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
 
     LaunchedEffect(viewModel.effect) {
         withContext(Dispatchers.Main.immediate) {
-            viewModel.effect.collect {
+            viewModel.effect.collectLatest {
                 when (it) {
                     is ChatEffect.ErrorEffect -> snackbarHostState.showSnackbar(it.message)
                 }
@@ -142,13 +144,13 @@ private fun ChatScreenContent(
                 }
             }
             Row(
-                modifier = Modifier.height(35.dp)
+                modifier = Modifier.wrapContentSize(),
+                verticalAlignment = Alignment.Bottom,
             ) {
                 TextField(
                     value = state.messageInput,
                     onValueChange = onTextChanged,
                     modifier = Modifier
-                        .fillMaxHeight()
                         .weight(1f)
                         .testTag("textInput")
                 )
