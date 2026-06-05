@@ -11,11 +11,17 @@ import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -24,6 +30,7 @@ import org.junit.Test
 
 class ChatViewModelTests {
 
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: ChatViewModel
     private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var messagesRepository: FakeMessagesRepository
@@ -31,8 +38,10 @@ class ChatViewModelTests {
     private lateinit var sendMessageUseCase: SendMessageUseCase
     private lateinit var mapper: UiMapper
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         savedStateHandle = SavedStateHandle()
         messagesRepository = FakeMessagesRepository()
         observeMessagesUseCase = ObserveMessagesUseCase(messagesRepository)
@@ -44,6 +53,12 @@ class ChatViewModelTests {
             observeMessagesUseCase = observeMessagesUseCase,
             sendMessageUseCase = sendMessageUseCase,
         )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test

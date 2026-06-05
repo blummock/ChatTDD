@@ -27,8 +27,18 @@ import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageUiModel
 import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
 import com.blummock.chattdd.ui.theme.ChatTDDTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,13 +49,15 @@ class ChatScreenTests {
 
     @get:Rule
     val composeTestRule = createComposeRule()
-
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: ChatViewModel
     private lateinit var mapper: UiMapper
     private lateinit var fakeSendMessagesRepository: FakeMessagesRepository
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Before
     fun setup() {
+        Dispatchers.setMain(testDispatcher)
         mapper = UiMapper(FakeTimeConverter())
         viewModel = ChatViewModel(
             uiMapper = mapper,
@@ -56,18 +68,22 @@ class ChatScreenTests {
         with(composeTestRule) {
             setContent {
                 ChatTDDTheme {
-                    MainScreen(viewModel = viewModel)
+                    ChatScreen(viewModel = viewModel)
                 }
             }
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun `send text successfully`(): Unit = with(composeTestRule) {
-        val sendButton = onNodeWithTag("sendButton")
-        val textInput = onNodeWithTag("textInput")
-        val errorMessage = onNodeWithTag("errorMessage")
+        val sendButton = composeTestRule.onNodeWithTag("sendButton")
+        val textInput = composeTestRule.onNodeWithTag("textInput")
         sendButton.assertIsNotEnabled()
         textInput.assertExists()
         textInput.performTextReplacement("some text")
@@ -75,14 +91,13 @@ class ChatScreenTests {
         fakeSendMessagesRepository.result = ChatResult.Success(Unit)
         sendButton.performClick()
         textInput.assertTextEquals("")
-        errorMessage.assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
     }
 
     @Test
     fun `send text with error`(): Unit = with(composeTestRule) {
         val sendButton = onNodeWithTag("sendButton")
         val textInput = onNodeWithTag("textInput")
-        val errorMessage = onNodeWithTag("errorMessage")
         sendButton.assertIsNotEnabled()
         textInput.assertExists()
         val text = "some text"
@@ -92,11 +107,15 @@ class ChatScreenTests {
         fakeSendMessagesRepository.result = ChatResult.Error(error)
         sendButton.performClick()
         textInput.assertTextEquals(text)
-        errorMessage.assertTextEquals(error.message)
+        composeTestRule.onNode(
+            hasTestTag("errorMessage") and
+                    hasAnyAncestor(hasText(error.message))
+        ).assertExists()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages success`(): Unit = with(composeTestRule) {
+    fun `loading list of messages success`(): Unit = runTest {
         val messages = listOf(
             TextMessage(
                 id = "0",
@@ -135,44 +154,50 @@ class ChatScreenTests {
                 text = "vitae"
             )
         )
-        onNodeWithTag("loadingList").assertExists()
-        onNodeWithTag("messagesList").assertDoesNotExist()
-        onNodeWithTag("errorList").assertDoesNotExist()
-        onNodeWithTag("emptyList").assertDoesNotExist()
-        fakeSendMessagesRepository.messages = flowOf(
-            MessagesState.Data(messages)
-        )
+        composeTestRule.onNodeWithTag("loadingList").assertExists()
+        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
+        launch {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
+        }
+        advanceUntilIdle()
         messages.indices.forEach { index ->
             assertMessageAtPosition(index, mapper.toUi(messages[index]))
         }
+        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages fail`(): Unit = with(composeTestRule) {
-        onNodeWithTag("loadingList").assertExists()
-        onNodeWithTag("messagesList").assertDoesNotExist()
-        onNodeWithTag("errorList").assertDoesNotExist()
-        onNodeWithTag("emptyList").assertDoesNotExist()
+    fun `loading list of messages fail`(): Unit = runTest {
+        composeTestRule.onNodeWithTag("loadingList").assertExists()
+        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
         val error = DomainError.NoInternet
-        fakeSendMessagesRepository.messages = flowOf(
-            MessagesState.Error(error)
-        )
+        launch {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Error(error))
+        }
+        advanceUntilIdle()
         composeTestRule.onNode(
-            hasTestTag("errorList") and
+            hasTestTag("errorMessage") and
                     hasAnyAncestor(hasText(error.message))
         ).assertExists()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages empty`(): Unit = with(composeTestRule) {
-        onNodeWithTag("loadingList").assertExists()
-        onNodeWithTag("messagesList").assertDoesNotExist()
-        onNodeWithTag("errorList").assertDoesNotExist()
-        onNodeWithTag("emptyList").assertDoesNotExist()
-        fakeSendMessagesRepository.messages = flowOf(
-            MessagesState.Data(emptyList())
-        )
-        onNodeWithTag("emptyList").assertExists()
+    fun `loading list of messages empty`(): Unit = runTest {
+        composeTestRule.onNodeWithTag("loadingList").assertExists()
+        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
+        launch {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(emptyList()))
+        }
+        advanceUntilIdle()
+        composeTestRule.onNodeWithTag("emptyList").assertExists()
     }
 
     private fun assertMessageAtPosition(position: Int, message: MessageUiModel) = with(composeTestRule) {
@@ -199,7 +224,7 @@ private class FakeTimeConverter : TimeConverter {
 
 private class FakeMessagesRepository : MessagesRepository {
 
-    lateinit var messages: Flow<MessagesState>
+    val messages = MutableSharedFlow<MessagesState>()
     lateinit var result: ChatResult<Unit>
 
     override fun observeMessages(): Flow<MessagesState> {

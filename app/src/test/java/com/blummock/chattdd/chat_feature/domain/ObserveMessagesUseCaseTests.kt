@@ -8,11 +8,9 @@ import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNull
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -22,8 +20,6 @@ class ObserveMessagesUseCaseTests {
     fun scenario() = runTest {
         val repository = FakeMessagesRepository()
         val useCase = ObserveMessagesUseCase(repository)
-        val messages = useCase().stateIn(this, started = SharingStarted.Eagerly, null)
-        assertNull(messages)
         val expectedMessages = listOf(
             TextMessage(
                 id = "tamquam",
@@ -44,19 +40,19 @@ class ObserveMessagesUseCaseTests {
                 text = "omittam"
             )
         )
-        repository.messagesState.emit(MessagesState.Data(expectedMessages))
-        assertEquals(MessagesState.Data(expectedMessages), messages.value)
+        repository.messagesFlow = flowOf(MessagesState.Data(expectedMessages))
+        assertEquals(MessagesState.Data(expectedMessages), useCase().first())
         val expectedError = DomainError.UnknownError
-        repository.messagesState.emit(MessagesState.Error(expectedError))
-        assertEquals(MessagesState.Error(expectedError), messages.value)
+        repository.messagesFlow = flowOf(MessagesState.Error(expectedError))
+        assertEquals(MessagesState.Error(expectedError), useCase().first())
     }
 
     private class FakeMessagesRepository : MessagesRepository {
 
-        val messagesState = MutableSharedFlow<MessagesState>()
+        lateinit var messagesFlow: Flow<MessagesState>
 
         override fun observeMessages(): Flow<MessagesState> {
-            return messagesState
+            return messagesFlow
         }
 
         override suspend fun postMessage(message: Message): ChatResult<Unit> {
