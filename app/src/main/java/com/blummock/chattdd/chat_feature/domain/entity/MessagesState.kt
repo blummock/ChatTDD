@@ -2,12 +2,14 @@ package com.blummock.chattdd.chat_feature.domain.entity
 
 sealed interface MessagesState {
 
+    val messages: List<Message>
+
     data class Data(
-        val messages: List<Message>
+        override val messages: List<Message>
     ) : MessagesState
 
     data class Error(
         val reason: DomainError,
-        val messages: List<Message> = emptyList(),
+        override val messages: List<Message> = emptyList(),
     ) : MessagesState
 }

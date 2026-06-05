@@ -70,7 +70,7 @@ class ObserveMessagesUseCaseTests {
             return messagesFlow
         }
 
-        override suspend fun postMessage(message: Message): ChatResult<Unit> {
+        override suspend fun postTextMessage(message: String): ChatResult<Unit> {
             return ChatResult.Success(Unit)
         }
     }

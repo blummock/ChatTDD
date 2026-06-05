@@ -5,6 +5,7 @@ import com.blummock.chattdd.chat_feature.domain.entity.Message
 import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageStatusUi
 import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
+import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
@@ -20,7 +21,7 @@ class UiMapperTests {
                 id = "delectus",
                 chatId = "mediocrem",
                 senderId = "user1",
-                timestamp = 1780457123,
+                timestamp = 1780437123,
                 isMine = false,
                 status = Message.MessageStatus.DELIVERED,
                 text = "ignota"

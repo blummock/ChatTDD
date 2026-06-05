@@ -1,5 +1,6 @@
 package com.blummock.chattdd.chat_feature.data
 
+import com.blummock.chattdd.chat_feature.data.mappers.ExceptionMapper
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 import junit.framework.TestCase.assertEquals
 import org.junit.Test

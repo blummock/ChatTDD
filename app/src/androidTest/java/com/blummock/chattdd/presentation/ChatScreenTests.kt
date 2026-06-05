@@ -13,6 +13,9 @@ import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
+import com.blummock.chattdd.chat_feature.presentation.ui.ChatScreen
+import com.blummock.chattdd.chat_feature.presentation.vm.ChatViewModel
+import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
 import com.blummock.chattdd.ui.theme.ChatTDDTheme
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -252,7 +255,7 @@ private class FakeMessagesRepository : MessagesRepository {
         return messages
     }
 
-    override suspend fun postMessage(message: Message): ChatResult<Unit> {
+    override suspend fun postTextMessage(message: String): ChatResult<Unit> {
         return result
     }
 }

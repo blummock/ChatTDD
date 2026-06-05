@@ -2,9 +2,7 @@ package com.blummock.chattdd.chat_feature.domain
 
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
-import com.blummock.chattdd.chat_feature.domain.entity.Message
 import com.blummock.chattdd.chat_feature.domain.entity.MessagesState
-import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import junit.framework.TestCase.assertEquals
@@ -27,35 +25,15 @@ class SendMessageUseCaseTests {
 
     @Test
     fun `success scenario`() = runTest {
-        val message = TextMessage(
-            id = "tamquam",
-            chatId = "nonumy",
-            senderId = "dictumst",
-            timestamp = 1972,
-            status = Message.MessageStatus.SENDING,
-            isMine = false,
-            text = "accusata"
-        )
-
         repository.result = ChatResult.Success(Unit)
-        assertEquals(ChatResult.Success(Unit), useCase(message))
+        assertEquals(ChatResult.Success(Unit), useCase("accusata"))
     }
 
     @Test
     fun `fail scenario`() = runTest {
-        val message = TextMessage(
-            id = "tamquam",
-            chatId = "nonumy",
-            senderId = "dictumst",
-            timestamp = 1972,
-            status = Message.MessageStatus.SENDING,
-            isMine = false,
-            text = "accusata"
-        )
-
         val expectedError = ChatResult.Error(DomainError.UnknownError)
         repository.result = expectedError
-        assertEquals(expectedError, useCase(message))
+        assertEquals(expectedError, useCase("accusata"))
     }
 
     private class FakeMessagesRepository : MessagesRepository {
@@ -66,7 +44,7 @@ class SendMessageUseCaseTests {
             return emptyFlow()
         }
 
-        override suspend fun postMessage(message: Message): ChatResult<Unit> {
+        override suspend fun postTextMessage(message: String): ChatResult<Unit> {
             return result
         }
     }

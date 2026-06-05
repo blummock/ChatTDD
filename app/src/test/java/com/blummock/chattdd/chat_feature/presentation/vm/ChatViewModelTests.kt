@@ -11,6 +11,7 @@ import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
+import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -168,6 +169,7 @@ class ChatViewModelTests {
             savedStateHandle = savedStateHandle,
             observeMessagesUseCase = observeMessagesUseCase,
             sendMessageUseCase = sendMessageUseCase,
+            uiMapper = mapper,
         )
         assertTrue(viewModel.state.value.sendButtonEnabled)
         assertEquals(testText, viewModel.state.value.messageInput)
@@ -211,7 +213,7 @@ private class FakeMessagesRepository : MessagesRepository {
         return messagesState
     }
 
-    override suspend fun postMessage(message: Message): ChatResult<Unit> {
+    override suspend fun postTextMessage(message: String): ChatResult<Unit> {
         delay(delay)
         postMessageCalls++
         return postMessageResult

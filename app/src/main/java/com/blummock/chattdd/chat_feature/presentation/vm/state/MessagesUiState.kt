@@ -1,6 +1,6 @@
 package com.blummock.chattdd.chat_feature.presentation.vm.state
 
-internal interface MessagesUiState {
+internal sealed interface MessagesUiState {
 
     data class Data(
         val messages: List<MessageUiModel>

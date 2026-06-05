@@ -1,6 +1,7 @@
 package com.blummock.chattdd.chat_feature.data
 
 import com.blummock.chattdd.chat_feature.data.local.models.MessageEntity
+import com.blummock.chattdd.chat_feature.data.mappers.MessagesMapper
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageDto
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageStatus
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageType
@@ -32,7 +33,7 @@ class MessagesMapperTests {
             isMine = true,
             text = "metus",
         )
-        assertEquals(expected, MessagesMapper().toDomain(entity, "nullam"))
+        assertEquals(expected, MessagesMapper().toDomain(entity, "turpis"))
         val entity2 = MessageEntity(
             id = "nullam",
             chatId = "sociis",
