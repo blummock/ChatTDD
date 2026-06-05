@@ -1,4 +1,4 @@
-package com.blummock.chattdd.chat_feature.data.remote.req.mappers
+package com.blummock.chattdd.chat_feature.data.mappers
 
 //import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 //import java.io.IOException

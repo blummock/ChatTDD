@@ -7,6 +7,7 @@ sealed interface MessagesState {
     ) : MessagesState
 
     data class Error(
-        val reason: DomainError
+        val reason: DomainError,
+        val messages: List<Message> = emptyList(),
     ) : MessagesState
 }
