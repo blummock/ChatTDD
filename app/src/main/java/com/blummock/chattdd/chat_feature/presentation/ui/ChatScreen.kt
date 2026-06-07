@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -30,7 +32,9 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -57,6 +61,8 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var isScrollingToBottom by remember { mutableStateOf(false) }
+
     val listState = rememberLazyListState()
 
     LaunchedEffect(viewModel.effect) {
@@ -64,16 +70,25 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
             viewModel.effect.collect {
                 when (it) {
                     is ChatEffect.ErrorEffect -> snackbarHostState.showSnackbar(it.message)
-                    ChatEffect.ScrollToBottom -> listState.scrollToItem(0)
+                    ChatEffect.ScrollToBottom -> isScrollingToBottom = true
                 }
             }
         }
     }
 
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isScrollingToBottom, state.messagesUiState) {
+        if (isScrollingToBottom && state.messagesUiState is MessagesUiState.Data) {
+            isScrollingToBottom = false
+            listState.scrollToItem((state.messagesUiState as MessagesUiState.Data).messages.size)
+        }
+    }
+
     ChatScreenContent(
         state = state,
         snackbarHostState = snackbarHostState,
+        listState = listState,
         onTextChanged = viewModel::setMessageInput,
         onSend = viewModel::sendMessage
     )
@@ -84,11 +99,12 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
 private fun ChatScreenContent(
     state: ChatState,
     snackbarHostState: SnackbarHostState,
+    listState: LazyListState,
     onTextChanged: (String) -> Unit,
     onSend: () -> Unit
 ) {
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.imePadding(),
 
         snackbarHost = {
             SnackbarHost(
@@ -113,7 +129,8 @@ private fun ChatScreenContent(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("messagesList"),
-                            messagesState
+                            listState,
+                            messagesState,
                         )
                     }
 
@@ -162,11 +179,15 @@ private fun ChatScreenContent(
 }
 
 @Composable
-private fun ListOfMessages(modifier: Modifier, state: MessagesUiState.Data) {
+private fun ListOfMessages(modifier: Modifier, lazyListState: LazyListState, state: MessagesUiState.Data) {
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(10.dp)
+        state = lazyListState,
+        verticalArrangement = Arrangement.spacedBy(
+            space = 10.dp,
+            alignment = Alignment.Bottom
+        ),
+        contentPadding = PaddingValues(10.dp),
     ) {
         itemsIndexed(state.messages, key = { _, item -> item.id }) { index, message ->
             BubblesFactory(message, index)
@@ -175,7 +196,7 @@ private fun ListOfMessages(modifier: Modifier, state: MessagesUiState.Data) {
 }
 
 @Composable
-internal fun BubblesFactory(messageModel: MessageUiModel, index: Int) {
+private fun BubblesFactory(messageModel: MessageUiModel, index: Int) {
     when (messageModel) {
         is TextMessageModel -> {
             Row(
@@ -212,7 +233,7 @@ internal fun BubblesFactory(messageModel: MessageUiModel, index: Int) {
 }
 
 @Composable
-internal fun SendStatusView(status: MessageStatusUi) {
+private fun SendStatusView(status: MessageStatusUi) {
 
     Row(verticalAlignment = Alignment.CenterVertically) {
 
@@ -284,5 +305,7 @@ private fun ChatScreenContentPreview() {
         sendButtonEnabled = true,
     )
     val snackbarHostState = remember { SnackbarHostState() }
-    ChatScreenContent(state, snackbarHostState, {}, {})
+    val listState = rememberLazyListState()
+
+    ChatScreenContent(state, snackbarHostState, listState, {}, {})
 }
