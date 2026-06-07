@@ -10,6 +10,7 @@ import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import com.blummock.chattdd.chat_feature.presentation.vm.state.ChatState
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
 import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +35,7 @@ internal class ChatViewModel(
 
     private val _effect = Channel<ChatEffect>()
     val effect = _effect.receiveAsFlow()
+    private var sendingJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -64,7 +66,8 @@ internal class ChatViewModel(
     }
 
     fun sendMessage() {
-        viewModelScope.launch {
+        if (sendingJob?.isActive == true) return
+        sendingJob = viewModelScope.launch {
             when (val result = sendMessageUseCase(_state.value.messageInput)) {
                 is ChatResult.Error -> _effect.send(ChatEffect.ErrorEffect(result.error.message))
                 is ChatResult.Success -> {
