@@ -117,6 +117,7 @@ class ChatViewModelTests {
         viewModel.sendMessage()
         assertEquals(ChatEffect.ScrollToBottom, viewModel.effect.first())
         assertEquals("", viewModel.state.value.messageInput)
+        assertFalse(viewModel.state.value.sendButtonEnabled)
         assertEquals(1, messagesRepository.postMessageCalls)
     }
 
@@ -168,6 +169,28 @@ class ChatViewModelTests {
         )
         assertTrue(viewModel.state.value.sendButtonEnabled)
         assertEquals(testText, viewModel.state.value.messageInput)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `recreating ViewModel after send`() = runTest {
+        val testText = "test text"
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        viewModel.setMessageInput(testText)
+        assertTrue(viewModel.state.value.sendButtonEnabled)
+        messagesRepository.postMessageResult = ChatResult.Success(Unit)
+        viewModel.sendMessage()
+        assertEquals(ChatEffect.ScrollToBottom, viewModel.effect.first())
+        assertEquals("", viewModel.state.value.messageInput)
+        assertFalse(viewModel.state.value.sendButtonEnabled)
+        viewModel = ChatViewModel(
+            savedStateHandle = savedStateHandle,
+            observeMessagesUseCase = observeMessagesUseCase,
+            sendMessageUseCase = sendMessageUseCase,
+            uiMapper = mapper,
+        )
+        assertEquals("", viewModel.state.value.messageInput)
+        assertFalse(viewModel.state.value.sendButtonEnabled)
     }
 }
 
