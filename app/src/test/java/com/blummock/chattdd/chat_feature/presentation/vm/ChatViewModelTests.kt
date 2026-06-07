@@ -13,11 +13,12 @@ import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import com.blummock.chattdd.chat_feature.presentation.vm.state.MessagesUiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -116,6 +117,23 @@ class ChatViewModelTests {
         viewModel.sendMessage()
         assertEquals(ChatEffect.ScrollToBottom, viewModel.effect.first())
         assertEquals("", viewModel.state.value.messageInput)
+        assertEquals(1, messagesRepository.postMessageCalls)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `send message multiple click`() = runTest {
+        val testText = "test text"
+        assertFalse(viewModel.state.value.sendButtonEnabled)
+        viewModel.setMessageInput(testText)
+        assertEquals(testText, viewModel.state.value.messageInput)
+        assertTrue(viewModel.state.value.sendButtonEnabled)
+        messagesRepository.delay = 500L
+        messagesRepository.postMessageResult = ChatResult.Success(Unit)
+        viewModel.sendMessage()
+        viewModel.sendMessage()
+        advanceUntilIdle()
+        assertEquals(1, messagesRepository.postMessageCalls)
     }
 
     @Test
@@ -160,6 +178,9 @@ private class FakeTimeConverter : TimeConverter {
 private class FakeMessagesRepository : MessagesRepository {
 
     val messagesState = MutableSharedFlow<MessagesState>()
+    var delay = 0L
+    var postMessageCalls = 0
+        private set
     lateinit var postMessageResult: ChatResult<Unit>
 
     override fun observeMessages(): Flow<MessagesState> {
@@ -167,6 +188,8 @@ private class FakeMessagesRepository : MessagesRepository {
     }
 
     override suspend fun postMessage(message: Message): ChatResult<Unit> {
+        delay(delay)
+        postMessageCalls++
         return postMessageResult
     }
 }
