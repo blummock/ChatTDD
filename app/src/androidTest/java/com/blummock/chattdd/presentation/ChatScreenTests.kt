@@ -1,7 +1,9 @@
 package com.blummock.chattdd.presentation
 
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyAncestor
@@ -31,7 +33,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -166,6 +167,34 @@ class ChatScreenTests {
             assertMessageAtPosition(index, mapper.toUi(messages[index]))
         }
         composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
+    @Test
+    fun `update list of messages after sending`(): Unit = with(composeTestRule) {
+        val items = 100
+        val messages = List(items) { index ->
+            TextMessage(
+                id = "$index",
+                chatId = "sem",
+                senderId = "persius",
+                timestamp = 8115,
+                status = Message.MessageStatus.DELIVERED,
+                isMine = false,
+                text = "appetere $index"
+            )
+        }
+        runTest {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
+        }
+        onNodeWithTag("Element at ${items - 1}").assertIsNotDisplayed()
+        onNodeWithTag("textInput").performTextReplacement("some text")
+        fakeSendMessagesRepository.result = ChatResult.Success(Unit)
+        onNodeWithTag("sendButton").performClick()
+        runTest {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
+        }
+        onNodeWithTag("Element at ${items - 1}").assertIsDisplayed()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
