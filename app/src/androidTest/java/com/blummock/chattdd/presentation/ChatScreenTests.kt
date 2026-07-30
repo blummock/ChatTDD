@@ -1,20 +1,7 @@
 package com.blummock.chattdd.presentation
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.blummock.chattdd.chat_feature.core.TimeConverter
@@ -26,20 +13,11 @@ import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
-import com.blummock.chattdd.chat_feature.presentation.vm.state.MessageUiModel
-import com.blummock.chattdd.chat_feature.presentation.vm.state.TextMessageModel
 import com.blummock.chattdd.ui.theme.ChatTDDTheme
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,17 +27,17 @@ import org.junit.runner.RunWith
 class ChatScreenTests {
 
     @get:Rule
-    val composeTestRule = createComposeRule()
-    private val testDispatcher = StandardTestDispatcher()
+    private val composeTestRule = createComposeRule()
     private lateinit var viewModel: ChatViewModel
     private lateinit var mapper: UiMapper
     private lateinit var fakeSendMessagesRepository: FakeMessagesRepository
+    private lateinit var chatScreenPage: ChatScreenPage
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         mapper = UiMapper(FakeTimeConverter())
+        fakeSendMessagesRepository = FakeMessagesRepository()
         viewModel = ChatViewModel(
             uiMapper = mapper,
             savedStateHandle = SavedStateHandle(),
@@ -73,50 +51,43 @@ class ChatScreenTests {
                 }
             }
         }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+        chatScreenPage = ChatScreenPage(composeTestRule)
     }
 
     @Test
-    fun `send text successfully`(): Unit = with(composeTestRule) {
-        val sendButton = composeTestRule.onNodeWithTag("sendButton")
-        val textInput = composeTestRule.onNodeWithTag("textInput")
-        sendButton.assertIsNotEnabled()
-        textInput.assertExists()
-        textInput.performTextReplacement("some text")
-        sendButton.assertIsEnabled()
+    fun `send text successfully`() {
+        chatScreenPage
+            .assertSendButtonDisabled()
+            .assertTextInputExists()
+            .typeTextInput("some text")
+            .assertSendButtonEnabled()
         fakeSendMessagesRepository.result = ChatResult.Success(Unit)
-        sendButton.performClick()
-        textInput.assertTextEquals("")
-        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
+        chatScreenPage
+            .clickSendButton()
+            .assertTextInputEquals("")
+            .assertErrorMessageNotExists()
     }
 
     @Test
-    fun `send text with error`(): Unit = with(composeTestRule) {
-        val sendButton = onNodeWithTag("sendButton")
-        val textInput = onNodeWithTag("textInput")
-        sendButton.assertIsNotEnabled()
-        textInput.assertExists()
+    fun `send text with error`() {
         val text = "some text"
-        textInput.performTextReplacement(text)
-        sendButton.assertIsEnabled()
+        chatScreenPage
+            .assertSendButtonDisabled()
+            .assertTextInputExists()
+            .typeTextInput(text)
+            .assertSendButtonEnabled()
         val error = DomainError.UnknownError
         fakeSendMessagesRepository.result = ChatResult.Error(error)
-        sendButton.performClick()
-        textInput.assertTextEquals(text)
-        composeTestRule.onNode(
-            hasTestTag("errorMessage") and
-                    hasAnyAncestor(hasText(error.message))
-        ).assertExists()
+
+        chatScreenPage
+            .clickSendButton()
+            .assertTextInputEquals(text)
+            .assertErrorWithMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages success`(): Unit = runTest {
+    fun `loading list of messages success`() {
         val messages = listOf(
             TextMessage(
                 id = "0",
@@ -155,23 +126,23 @@ class ChatScreenTests {
                 text = "vitae"
             )
         )
-        composeTestRule.onNodeWithTag("loadingList").assertExists()
-        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
-        launch {
+
+        chatScreenPage
+            .assertLoadingExists()
+            .assertMessagesListNotExists()
+            .assertErrorMessageNotExists()
+            .assertEmptyListNotExists()
+        runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
-        advanceUntilIdle()
         messages.indices.forEach { index ->
-            assertMessageAtPosition(index, mapper.toUi(messages[index]))
+            chatScreenPage.assertMessageAtPosition(index, mapper.toUi(messages[index]))
         }
-        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
     @Test
-    fun `update list of messages after sending`(): Unit = with(composeTestRule) {
+    fun `update list of messages after sending`() {
         val items = 100
         val messages = List(items) { index ->
             TextMessage(
@@ -187,63 +158,47 @@ class ChatScreenTests {
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
-        onNodeWithTag("Element at ${items - 1}").assertIsNotDisplayed()
-        onNodeWithTag("textInput").performTextReplacement("some text")
+        chatScreenPage
+            .scrollListToPosition(0)
+            .assertElementAtNotDisplayed(items - 1)
+            .typeTextInput("some text")
+
         fakeSendMessagesRepository.result = ChatResult.Success(Unit)
-        onNodeWithTag("sendButton").performClick()
+        chatScreenPage.clickSendButton()
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
-        onNodeWithTag("Element at ${items - 1}").assertIsDisplayed()
+        chatScreenPage.assertElementAtDisplayed(items - 1)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages fail`(): Unit = runTest {
-        composeTestRule.onNodeWithTag("loadingList").assertExists()
-        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
+    fun `loading list of messages fail`() {
+        chatScreenPage
+            .assertLoadingExists()
+            .assertMessagesListNotExists()
+            .assertErrorMessageNotExists()
+            .assertEmptyListNotExists()
         val error = DomainError.NoInternet
-        launch {
+        runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Error(error))
         }
-        advanceUntilIdle()
-        composeTestRule.onNode(
-            hasTestTag("errorMessage") and
-                    hasAnyAncestor(hasText(error.message))
-        ).assertExists()
+        chatScreenPage
+            .assertErrorWithMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages empty`(): Unit = runTest {
-        composeTestRule.onNodeWithTag("loadingList").assertExists()
-        composeTestRule.onNodeWithTag("messagesList").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("errorMessage").assertDoesNotExist()
-        composeTestRule.onNodeWithTag("emptyList").assertDoesNotExist()
-        launch {
+    fun `loading list of messages empty`() {
+        chatScreenPage
+            .assertLoadingExists()
+            .assertMessagesListNotExists()
+            .assertErrorMessageNotExists()
+            .assertEmptyListNotExists()
+        runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(emptyList()))
         }
-        advanceUntilIdle()
-        composeTestRule.onNodeWithTag("emptyList").assertExists()
-    }
-
-    private fun assertMessageAtPosition(position: Int, message: MessageUiModel) = with(composeTestRule) {
-        onNodeWithTag("messagesList")
-            .performScrollToNode(hasTestTag("Element at $position"))
-            .assertIsDisplayed()
-        when (message) {
-            is TextMessageModel -> {
-                composeTestRule.onNode(
-                    hasTestTag("Element at $position") and
-                            hasAnyAncestor(hasTestTag("whoos ${message.isMine}")) and
-                            hasAnyDescendant(hasText(message.text)) and
-                            hasAnyDescendant(hasTestTag("status ${message.status}")) and
-                            hasAnyDescendant(hasText(message.time))
-                ).assertExists()
-            }
-        }
+        chatScreenPage.assertEmptyListExists()
     }
 }
 
