@@ -1,7 +1,7 @@
 package com.blummock.chattdd.presentation
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.blummock.chattdd.chat_feature.core.TimeConverter
@@ -55,7 +55,7 @@ class ChatScreenTests {
     }
 
     @Test
-    fun `send text successfully`() {
+    fun `when text is sent successfully then input clears and no error message appears`() {
         chatScreenPage
             .assertSendButtonDisabled()
             .assertTextInputExists()
@@ -69,7 +69,7 @@ class ChatScreenTests {
     }
 
     @Test
-    fun `send text with error`() {
+    fun `when text is sent with error then input remains and the error message appears`() {
         val text = "some text"
         chatScreenPage
             .assertSendButtonDisabled()
@@ -87,7 +87,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages success`() {
+    fun `when loading starts then progress appears and when loading is success then messages are shown`() {
         val messages = listOf(
             TextMessage(
                 id = "0",
@@ -142,7 +142,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
     @Test
-    fun `update list of messages after sending`() {
+    fun `when messages are updated and a recently message's visible then list scrolls to the recently message`() {
         val items = 100
         val messages = List(items) { index ->
             TextMessage(
@@ -159,21 +159,66 @@ class ChatScreenTests {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
         chatScreenPage
-            .scrollListToPosition(0)
-            .assertElementAtNotDisplayed(items - 1)
-            .typeTextInput("some text")
+            .assertElementAtDisplayed(items - 1)
+        val newItemIndex = 100
+        val newMessages = messages + TextMessage(
+            id = "$newItemIndex",
+            chatId = "sda",
+            senderId = "persius",
+            timestamp = 8116,
+            status = Message.MessageStatus.DELIVERED,
+            isMine = false,
+            text = "new message"
+        )
+        runTest {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(newMessages))
+        }
+        chatScreenPage.assertElementAtDisplayed(newItemIndex)
+    }
 
-        fakeSendMessagesRepository.result = ChatResult.Success(Unit)
-        chatScreenPage.clickSendButton()
+    @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
+    @Test
+    fun `when messages are updated and a recently message is invisible then the list remains at the same position`() {
+        val items = 100
+        val messages = List(items) { index ->
+            TextMessage(
+                id = "$index",
+                chatId = "sem",
+                senderId = "persius",
+                timestamp = 8115,
+                status = Message.MessageStatus.DELIVERED,
+                isMine = false,
+                text = "appetere $index"
+            )
+        }
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
-        chatScreenPage.assertElementAtDisplayed(items - 1)
+        val currentPosition = 50
+        chatScreenPage
+            .assertElementAtDisplayed(items - 1)
+            .scrollListToPosition(currentPosition)
+        val newItemIndex = 100
+        val newMessages = messages + TextMessage(
+            id = "$newItemIndex",
+            chatId = "sda",
+            senderId = "persius",
+            timestamp = 8116,
+            status = Message.MessageStatus.DELIVERED,
+            isMine = false,
+            text = "new message"
+        )
+        runTest {
+            fakeSendMessagesRepository.messages.emit(MessagesState.Data(newMessages))
+        }
+        chatScreenPage
+            .assertElementAtNotDisplayed(newItemIndex)
+            .assertElementAtDisplayed(currentPosition)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages fail`() {
+    fun `when messages loading fails then the error message appears`() {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
@@ -189,7 +234,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading list of messages empty`() {
+    fun `when after loading messages are empty then the empty-list message appears`() {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
