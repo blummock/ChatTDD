@@ -1,7 +1,5 @@
 package com.blummock.chattdd.chat_feature.data
 
-import com.blummock.chattdd.chat_feature.core.UserInfo
-import com.blummock.chattdd.chat_feature.core.UserInfoRepository
 import com.blummock.chattdd.chat_feature.data.local.dao.MessagesDao
 import com.blummock.chattdd.chat_feature.data.local.models.MessageEntity
 import com.blummock.chattdd.chat_feature.data.remote.api.MessagesApi
@@ -15,7 +13,9 @@ import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 import com.blummock.chattdd.chat_feature.domain.entity.Message
 import com.blummock.chattdd.chat_feature.domain.entity.MessagesState
 import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
+import com.blummock.chattdd.chat_feature.domain.entity.UserInfo
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
+import com.blummock.chattdd.chat_feature.domain.repositories.UserInfoRepository
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
