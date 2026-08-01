@@ -142,7 +142,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
     @Test
-    fun `when messages are updated and a recently message's visible then list scrolls to the recently message`() {
+    fun `when messages are updated and a recently message is visible then list scrolls to the recently message`() {
         val items = 100
         val messages = List(items) { index ->
             TextMessage(
