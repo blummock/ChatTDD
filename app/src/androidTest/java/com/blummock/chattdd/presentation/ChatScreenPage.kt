@@ -64,7 +64,7 @@ internal class ChatScreenPage(private val rule: ComposeContentTestRule) {
     fun assertSnackMessage(message: String): ChatScreenPage {
         rule.onNode(
             hasTestTag("snack") and
-                    hasAnyAncestor(hasText(message))
+                    hasAnyDescendant(hasText(message))
         ).assertExists()
         return this
     }
