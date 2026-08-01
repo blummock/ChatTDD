@@ -23,7 +23,7 @@ internal class ChatScreenPage(private val rule: ComposeContentTestRule) {
     private val textInput get() = rule.onNodeWithTag("textInput")
     private val loadingList get() = rule.onNodeWithTag("loadingList")
     private val messagesList get() = rule.onNodeWithTag("messagesList")
-    private val errorMessage get() = rule.onNodeWithTag("errorMessage")
+    private val toast get() = rule.onNodeWithTag("toast")
     private val emptyList get() = rule.onNodeWithTag("emptyList")
 
     fun typeTextInput(text: String): ChatScreenPage {
@@ -56,14 +56,14 @@ internal class ChatScreenPage(private val rule: ComposeContentTestRule) {
         return this
     }
 
-    fun assertErrorMessageNotExists(): ChatScreenPage {
-        errorMessage.assertDoesNotExist()
+    fun assertToastNotExists(): ChatScreenPage {
+        toast.assertDoesNotExist()
         return this
     }
 
-    fun assertErrorWithMessage(message: String): ChatScreenPage {
+    fun assertToastMessage(message: String): ChatScreenPage {
         rule.onNode(
-            hasTestTag("errorMessage") and
+            hasTestTag("toast") and
                     hasAnyAncestor(hasText(message))
         ).assertExists()
         return this

@@ -1,7 +1,7 @@
 package com.blummock.chattdd.presentation
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.blummock.chattdd.chat_feature.core.TimeConverter
@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
 class ChatScreenTests {
 
     @get:Rule
-    private val composeTestRule = createComposeRule()
+    val composeTestRule = createComposeRule()
     private lateinit var viewModel: ChatViewModel
     private lateinit var mapper: UiMapper
     private lateinit var fakeSendMessagesRepository: FakeMessagesRepository
@@ -65,7 +65,7 @@ class ChatScreenTests {
         chatScreenPage
             .clickSendButton()
             .assertTextInputEquals("")
-            .assertErrorMessageNotExists()
+            .assertToastNotExists()
     }
 
     @Test
@@ -82,7 +82,7 @@ class ChatScreenTests {
         chatScreenPage
             .clickSendButton()
             .assertTextInputEquals(text)
-            .assertErrorWithMessage(error.message)
+            .assertToastMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -130,7 +130,7 @@ class ChatScreenTests {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertErrorMessageNotExists()
+            .assertToastNotExists()
             .assertEmptyListNotExists()
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
@@ -222,23 +222,23 @@ class ChatScreenTests {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertErrorMessageNotExists()
+            .assertToastNotExists()
             .assertEmptyListNotExists()
         val error = DomainError.NoInternet
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Error(error))
         }
         chatScreenPage
-            .assertErrorWithMessage(error.message)
+            .assertToastMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `when after loading messages are empty then the empty-list message appears`() {
+    fun `when after loading messages are empty then the empty-list screen appears`() {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertErrorMessageNotExists()
+            .assertToastNotExists()
             .assertEmptyListNotExists()
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(emptyList()))
