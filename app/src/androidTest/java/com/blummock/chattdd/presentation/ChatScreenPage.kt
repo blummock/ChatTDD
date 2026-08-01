@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -97,7 +96,7 @@ internal class ChatScreenPage(private val rule: ComposeContentTestRule) {
             is TextMessageModel -> {
                 rule.onNode(
                     hasTestTag("Element at $position") and
-                            hasAnyAncestor(hasTestTag("whoos ${message.isMine}")) and
+                            hasAnyDescendant(hasTestTag("whoos ${message.isMine}")) and
                             hasAnyDescendant(hasText(message.text)) and
                             hasAnyDescendant(hasTestTag("status ${message.status}")) and
                             hasAnyDescendant(hasText(message.time))
