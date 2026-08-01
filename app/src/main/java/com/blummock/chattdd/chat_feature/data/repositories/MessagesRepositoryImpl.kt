@@ -1,6 +1,5 @@
 package com.blummock.chattdd.chat_feature.data.repositories
 
-import com.blummock.chattdd.chat_feature.core.UserInfoRepository
 import com.blummock.chattdd.chat_feature.data.local.dao.MessagesDao
 import com.blummock.chattdd.chat_feature.data.mappers.ExceptionMapper
 import com.blummock.chattdd.chat_feature.data.mappers.MessagesMapper
@@ -10,6 +9,7 @@ import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
 import com.blummock.chattdd.chat_feature.domain.entity.MessagesState
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
+import com.blummock.chattdd.chat_feature.domain.repositories.UserInfoRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow

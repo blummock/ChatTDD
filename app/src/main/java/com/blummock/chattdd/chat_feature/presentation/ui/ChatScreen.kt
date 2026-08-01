@@ -108,7 +108,7 @@ private fun ChatScreenContent(
 
         snackbarHost = {
             SnackbarHost(
-                modifier = Modifier.testTag("toast"),
+                modifier = Modifier.testTag("snack"),
                 hostState = snackbarHostState
             )
         }
