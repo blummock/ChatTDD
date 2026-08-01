@@ -65,7 +65,7 @@ class ChatScreenTests {
         chatScreenPage
             .clickSendButton()
             .assertTextInputEquals("")
-            .assertToastNotExists()
+            .assertSnackMessage()
     }
 
     @Test
@@ -82,7 +82,7 @@ class ChatScreenTests {
         chatScreenPage
             .clickSendButton()
             .assertTextInputEquals(text)
-            .assertToastMessage(error.message)
+            .assertSnackMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -130,7 +130,7 @@ class ChatScreenTests {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertToastNotExists()
+            .assertSnackMessage()
             .assertEmptyListNotExists()
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
@@ -222,14 +222,14 @@ class ChatScreenTests {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertToastNotExists()
+            .assertSnackMessage()
             .assertEmptyListNotExists()
         val error = DomainError.NoInternet
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Error(error))
         }
         chatScreenPage
-            .assertToastMessage(error.message)
+            .assertSnackMessage(error.message)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -238,7 +238,7 @@ class ChatScreenTests {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
-            .assertToastNotExists()
+            .assertSnackMessage()
             .assertEmptyListNotExists()
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(emptyList()))
