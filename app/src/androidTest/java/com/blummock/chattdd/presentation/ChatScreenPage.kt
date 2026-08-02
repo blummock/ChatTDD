@@ -107,6 +107,7 @@ internal class ChatScreenPage(private val rule: ComposeContentTestRule) {
 
     fun scrollListToPosition(position: Int): ChatScreenPage {
         messagesList.performScrollToNode(hasTestTag("Element at $position"))
+            .assertIsDisplayed()
         return this
     }
 
