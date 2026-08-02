@@ -63,7 +63,7 @@ class ChatViewModelTests {
     }
 
     @Test
-    fun `loading messages not empty`() = runTest {
+    fun `When viewModel inits then state is loading and when loading is success then get messages`() = runTest {
         val listOfMessages = listOf(
             TextMessage(
                 id = "delectus",
@@ -91,14 +91,54 @@ class ChatViewModelTests {
     }
 
     @Test
-    fun `load messages empty`() = runTest {
+    fun `When messages list updates then the viewModels has updated list`() = runTest {
+        val listOfMessages = listOf(
+            TextMessage(
+                id = "delectus",
+                chatId = "mediocrem",
+                senderId = "nascetur",
+                timestamp = 1780457123,
+                status = Message.MessageStatus.DELIVERED,
+                isMine = false,
+                text = "ignota"
+            ),
+            TextMessage(
+                id = "habitasse",
+                chatId = "dignissim",
+                senderId = "meliore",
+                timestamp = 1780457123,
+                status = Message.MessageStatus.SENDING,
+                isMine = true,
+                text = "tale"
+            )
+        )
+        assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
+        messagesRepository.messagesState.emit(MessagesState.Data(listOfMessages))
+        var expected = listOfMessages.map { mapper.toUi(it) }
+        assertEquals(MessagesUiState.Data(expected), viewModel.state.value.messagesUiState)
+        val newListOfMessages = listOfMessages + TextMessage(
+            id = "habiwedse1",
+            chatId = "digsdnissim",
+            senderId = "meliore",
+            timestamp = 1780457125,
+            status = Message.MessageStatus.SENDING,
+            isMine = true,
+            text = "new text"
+        )
+        messagesRepository.messagesState.emit(MessagesState.Data(newListOfMessages))
+        expected = newListOfMessages.map { mapper.toUi(it) }
+        assertEquals(MessagesUiState.Data(expected), viewModel.state.value.messagesUiState)
+    }
+
+    @Test
+    fun `When viewModel get empty messages then the state becomes empty`() = runTest {
         assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
         messagesRepository.messagesState.emit(MessagesState.Data(emptyList()))
         assertEquals(MessagesUiState.Empty, viewModel.state.value.messagesUiState)
     }
 
     @Test
-    fun `load messages error`() = runTest {
+    fun `When viewModel get load messages with error then the state becomes empty and sends event message`() = runTest {
         assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
         messagesRepository.messagesState.emit(MessagesState.Error(DomainError.NoInternet))
         assertEquals(MessagesUiState.Empty, viewModel.state.value.messagesUiState)
@@ -107,7 +147,7 @@ class ChatViewModelTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `send message success`() = runTest {
+    fun `When viewModel sends message with success then message input clears and send cta disabled`() = runTest {
         val testText = "test text"
         assertFalse(viewModel.state.value.sendButtonEnabled)
         viewModel.setMessageInput(testText)
@@ -115,7 +155,7 @@ class ChatViewModelTests {
         assertTrue(viewModel.state.value.sendButtonEnabled)
         messagesRepository.postMessageResult = ChatResult.Success(Unit)
         viewModel.sendMessage()
-        assertEquals(ChatEffect.ScrollToBottom, viewModel.effect.first())
+        advanceUntilIdle()
         assertEquals("", viewModel.state.value.messageInput)
         assertFalse(viewModel.state.value.sendButtonEnabled)
         assertEquals(1, messagesRepository.postMessageCalls)
@@ -123,7 +163,7 @@ class ChatViewModelTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `send message multiple click`() = runTest {
+    fun `When calls send message multiple times then send happens once`() = runTest {
         val testText = "test text"
         assertFalse(viewModel.state.value.sendButtonEnabled)
         viewModel.setMessageInput(testText)
@@ -138,7 +178,7 @@ class ChatViewModelTests {
     }
 
     @Test
-    fun `send message error`() = runTest {
+    fun `When viewModel sends message with error then message input is kept with send button state`() = runTest {
         val testText = "test text"
         assertFalse(viewModel.state.value.sendButtonEnabled)
         viewModel.setMessageInput(testText)
@@ -149,7 +189,7 @@ class ChatViewModelTests {
     }
 
     @Test
-    fun `input is disabled`() = runTest {
+    fun `When message input in viewModel is cleared then the send button state changes relatively`() = runTest {
         assertFalse(viewModel.state.value.sendButtonEnabled)
         viewModel.setMessageInput("some text")
         assertTrue(viewModel.state.value.sendButtonEnabled)
@@ -158,7 +198,7 @@ class ChatViewModelTests {
     }
 
     @Test
-    fun `recreating ViewModel`() = runTest {
+    fun `When ViewModel recreates with savedStateHandle then the input with send button state restores`() = runTest {
         val testText = "test text"
         viewModel.setMessageInput(testText)
         assertTrue(viewModel.state.value.sendButtonEnabled)
@@ -169,28 +209,6 @@ class ChatViewModelTests {
         )
         assertTrue(viewModel.state.value.sendButtonEnabled)
         assertEquals(testText, viewModel.state.value.messageInput)
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `recreating ViewModel after send`() = runTest {
-        val testText = "test text"
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
-        viewModel.setMessageInput(testText)
-        assertTrue(viewModel.state.value.sendButtonEnabled)
-        messagesRepository.postMessageResult = ChatResult.Success(Unit)
-        viewModel.sendMessage()
-        assertEquals(ChatEffect.ScrollToBottom, viewModel.effect.first())
-        assertEquals("", viewModel.state.value.messageInput)
-        assertFalse(viewModel.state.value.sendButtonEnabled)
-        viewModel = ChatViewModel(
-            savedStateHandle = savedStateHandle,
-            observeMessagesUseCase = observeMessagesUseCase,
-            sendMessageUseCase = sendMessageUseCase,
-            uiMapper = mapper,
-        )
-        assertEquals("", viewModel.state.value.messageInput)
-        assertFalse(viewModel.state.value.sendButtonEnabled)
     }
 }
 

@@ -55,7 +55,7 @@ class ChatScreenTests {
     }
 
     @Test
-    fun `when text is sent successfully then input clears and no error message appears`() {
+    fun `When text is sent successfully then input clears and no error message appears`() {
         chatScreenPage
             .assertSendButtonDisabled()
             .assertTextInputExists()
@@ -69,7 +69,7 @@ class ChatScreenTests {
     }
 
     @Test
-    fun `when text is sent with error then input remains and the error message appears`() {
+    fun `When text is sent with error then input remains and the error message appears`() {
         val text = "some text"
         chatScreenPage
             .assertSendButtonDisabled()
@@ -87,7 +87,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `when loading starts then progress appears and when loading is success then messages are shown`() {
+    fun `When loading starts then progress appears and when loading is success then messages are shown`() {
         val messages = listOf(
             TextMessage(
                 id = "0",
@@ -142,7 +142,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
     @Test
-    fun `when messages are updated and a recently message is visible then list scrolls to the recently message`() {
+    fun `When messages are updated and a recently message is visible then list scrolls to the recently message`() {
         val items = 100
         val messages = List(items) { index ->
             TextMessage(
@@ -178,7 +178,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTestApi::class)
     @Test
-    fun `when messages are updated and a recently message is invisible then the list remains at the same position`() {
+    fun `When messages are updated and a recently message is invisible then the list remains at the same position`() {
         val items = 100
         val messages = List(items) { index ->
             TextMessage(
@@ -218,7 +218,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `when messages loading fails then the error message appears`() {
+    fun `When messages loading fails then the error message appears`() {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
@@ -234,7 +234,7 @@ class ChatScreenTests {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `when after loading messages are empty then the empty-list screen appears`() {
+    fun `When after loading messages are empty then the empty-list screen appears`() {
         chatScreenPage
             .assertLoadingExists()
             .assertMessagesListNotExists()
