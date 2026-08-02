@@ -32,7 +32,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,8 +61,6 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var isScrollingToBottom by remember { mutableStateOf(false) }
-
     val listState = rememberLazyListState()
 
     LaunchedEffect(viewModel.effect) {
@@ -70,20 +68,12 @@ internal fun ChatScreen(viewModel: ChatViewModel) {
             viewModel.effect.collect {
                 when (it) {
                     is ChatEffect.ErrorEffect -> snackbarHostState.showSnackbar(it.message)
-                    ChatEffect.ScrollToBottom -> isScrollingToBottom = true
                 }
             }
         }
     }
 
     val state by viewModel.state.collectAsStateWithLifecycle()
-
-    LaunchedEffect(isScrollingToBottom, state.messagesUiState) {
-        if (isScrollingToBottom && state.messagesUiState is MessagesUiState.Data) {
-            isScrollingToBottom = false
-            listState.scrollToItem((state.messagesUiState as MessagesUiState.Data).messages.size)
-        }
-    }
 
     ChatScreenContent(
         state = state,
@@ -129,8 +119,8 @@ private fun ChatScreenContent(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .testTag("messagesList"),
-                            listState,
-                            messagesState,
+                            lazyListState = listState,
+                            messages = messagesState.messages,
                         )
                     }
 
@@ -179,7 +169,26 @@ private fun ChatScreenContent(
 }
 
 @Composable
-private fun ListOfMessages(modifier: Modifier, lazyListState: LazyListState, state: MessagesUiState.Data) {
+private fun ListOfMessages(
+    modifier: Modifier,
+    lazyListState: LazyListState,
+    messages: List<MessageUiModel>,
+) {
+
+    var previousSize by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(messages.size) {
+        if (messages.isEmpty()) return@LaunchedEffect
+        val visibleItemsInfo = lazyListState.layoutInfo.visibleItemsInfo
+        val visibleSize = visibleItemsInfo.size
+        val newSizeIsOutOfVisible = previousSize < visibleSize && messages.size > visibleSize
+        val atTheBottom = visibleItemsInfo.lastOrNull()?.index == previousSize - 1
+        if (newSizeIsOutOfVisible || atTheBottom) {
+            lazyListState.scrollToItem(messages.lastIndex)
+        }
+        previousSize = messages.size
+    }
+
     LazyColumn(
         modifier = modifier,
         state = lazyListState,
@@ -189,7 +198,7 @@ private fun ListOfMessages(modifier: Modifier, lazyListState: LazyListState, sta
         ),
         contentPadding = PaddingValues(10.dp),
     ) {
-        itemsIndexed(state.messages, key = { _, item -> item.id }) { index, message ->
+        itemsIndexed(messages, key = { _, item -> item.id }) { index, message ->
             BubblesFactory(message, index)
         }
     }

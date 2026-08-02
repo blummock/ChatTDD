@@ -71,7 +71,6 @@ internal class ChatViewModel(
             when (val result = sendMessageUseCase(_state.value.messageInput)) {
                 is ChatResult.Error -> _effect.send(ChatEffect.ErrorEffect(result.error.message))
                 is ChatResult.Success -> {
-                    _effect.send(ChatEffect.ScrollToBottom)
                     _state.update { it.copy(messageInput = "", sendButtonEnabled = false) }
                     savedStateHandle[INPUT_KEY] = ""
                 }
