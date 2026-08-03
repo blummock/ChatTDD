@@ -72,7 +72,7 @@ class MessagesRepositoryTest {
         assertEquals(expected, messages[0])
         val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
-        val expected2 = listOf(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
+        val expected2 = listOf(dto.map { mapper.toLocal(it) })
         assertEquals(expected2, fakeMessagesDao.updates)
     }
 
@@ -103,7 +103,8 @@ class MessagesRepositoryTest {
         assertEquals(expected, messages[0])
         val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
-        val expected2 = listOf(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
+        val userId = fakeUserInfoRepository.getUserInfo().data.userId
+        val expected2 = listOf(dto.map { mapper.toLocal(it) })
         assertEquals(expected2, fakeMessagesDao.updates)
     }
 
