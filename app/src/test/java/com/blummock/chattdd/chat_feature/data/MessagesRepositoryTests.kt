@@ -20,6 +20,7 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScheduler
@@ -62,15 +63,18 @@ class MessagesRepositoryTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `When loading messages then they come from cache first and then from api`() = runTest(dispatcher) {
+        val entities = getLocalMessages()
+        fakeMessagesDao.flow.emit(entities)
+
         val messages = mutableListOf<MessagesState>()
         backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
-        val entities = getLocalMessages()
-        fakeMessagesDao.flow.emit(entities)
+
         val userId = fakeUserInfoRepository.getUserInfo().data.userId
         val expected = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected, messages[0])
+
         val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
         val expected2 = listOf(dto.map { mapper.toLocal(it) })
@@ -81,12 +85,14 @@ class MessagesRepositoryTest {
     @Test
     fun `When loading messages with api error then they come from cache`() = runTest(dispatcher) {
         fakeMessagesApi.error = RuntimeException()
+        val entities = getLocalMessages()
+        fakeMessagesDao.flow.emit(entities)
+
         val messages = mutableListOf<MessagesState>()
         backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
-        val entities = getLocalMessages()
-        fakeMessagesDao.flow.emit(entities)
+
         val userId = fakeUserInfoRepository.getUserInfo().data.userId
         val expected = MessagesState.Error(DomainError.UnknownError, entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected, messages[0])
@@ -99,17 +105,20 @@ class MessagesRepositoryTest {
         backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
-        fakeMessagesDao.flow.emit(emptyList())
+
+        val entities = getLocalMessages()
+        fakeMessagesDao.flow.emit(entities)
         assertTrue(messages.isEmpty())
+
         val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
         val expected = listOf(dto.map { mapper.toLocal(it) })
         assertEquals(expected, fakeMessagesDao.updates)
-        val entities = getLocalMessages()
-        fakeMessagesDao.flow.emit(entities)
+
         val userId = fakeUserInfoRepository.getUserInfo().data.userId
         val expected2 = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected2, messages[0])
+
         fakeMessagesDao.flow.emit(emptyList())
         assertEquals(MessagesState.Data(emptyList()), messages[1])
     }
@@ -168,7 +177,7 @@ private class FakeMessagesDao() : MessagesDao {
 
     val updates = mutableListOf<List<MessageEntity>>()
 
-    val flow = MutableSharedFlow<List<MessageEntity>>()
+    val flow = MutableStateFlow<List<MessageEntity>>(emptyList())
 
     override fun observeMessages(): Flow<List<MessageEntity>> {
         return flow
