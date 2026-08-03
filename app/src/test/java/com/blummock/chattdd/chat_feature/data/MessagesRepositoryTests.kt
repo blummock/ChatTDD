@@ -2,17 +2,18 @@ package com.blummock.chattdd.chat_feature.data
 
 import com.blummock.chattdd.chat_feature.data.local.dao.MessagesDao
 import com.blummock.chattdd.chat_feature.data.local.models.MessageEntity
+import com.blummock.chattdd.chat_feature.data.mappers.ExceptionMapper
+import com.blummock.chattdd.chat_feature.data.mappers.MessagesMapper
 import com.blummock.chattdd.chat_feature.data.remote.api.MessagesApi
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageDto
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageStatus
 import com.blummock.chattdd.chat_feature.data.remote.dto.MessageType
 import com.blummock.chattdd.chat_feature.data.remote.reps.SendMessageResponse
 import com.blummock.chattdd.chat_feature.data.remote.req.MessageRequest
+import com.blummock.chattdd.chat_feature.data.repositories.MessagesRepositoryImpl
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
 import com.blummock.chattdd.chat_feature.domain.entity.DomainError
-import com.blummock.chattdd.chat_feature.domain.entity.Message
 import com.blummock.chattdd.chat_feature.domain.entity.MessagesState
-import com.blummock.chattdd.chat_feature.domain.entity.TextMessage
 import com.blummock.chattdd.chat_feature.domain.entity.UserInfo
 import com.blummock.chattdd.chat_feature.domain.repositories.MessagesRepository
 import com.blummock.chattdd.chat_feature.domain.repositories.UserInfoRepository
@@ -125,14 +126,14 @@ class MessagesRepositoryTest {
 
     @Test
     fun `When post message with success then the result is success`() = runTest(dispatcher) {
-        val result = messagesRepository.postMessage(getDomainMessage())
+        val result = messagesRepository.postTextMessage("sdsfds")
         assertEquals(ChatResult.Success(Unit), result)
     }
 
     @Test
     fun `When post message with error then result is fail`() = runTest(dispatcher) {
         fakeMessagesApi.error = RuntimeException()
-        val result = messagesRepository.postMessage(getDomainMessage())
+        val result = messagesRepository.postTextMessage("dscrwr")
         assertEquals(ChatResult.Error(DomainError.UnknownError), result)
     }
 }
@@ -161,16 +162,6 @@ private fun getRemoteMessages() = listOf(
         text = "atomorum",
         imageUrl = "https://www.google.com/#q=principes"
     )
-)
-
-private fun getDomainMessage() = TextMessage(
-    id = "possit",
-    chatId = "est",
-    senderId = "tota",
-    timestamp = 7613,
-    status = Message.MessageStatus.SENDING,
-    isMine = false,
-    text = "turpis"
 )
 
 private class FakeMessagesDao() : MessagesDao {
