@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -36,6 +36,10 @@ class MessagesRepositoryTest {
     private lateinit var messagesRepository: MessagesRepository
     private lateinit var mapper: MessagesMapper
     private lateinit var exceptionMapper: ExceptionMapper
+    private val scheduler = TestCoroutineScheduler()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val dispatcher = UnconfinedTestDispatcher(scheduler)
 
     @Before
     fun setup() {
@@ -44,171 +48,118 @@ class MessagesRepositoryTest {
         fakeUserInfoRepository = FakeUserInfoRepository()
         mapper = MessagesMapper()
         exceptionMapper = ExceptionMapper()
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `When loading messages then they come from cache first and then from api`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,
             userInfoRepository = fakeUserInfoRepository,
             mapper = mapper,
             exceptionMapper = exceptionMapper,
-            dispatcher = StandardTestDispatcher(testScheduler)
+            dispatcher = dispatcher
         )
-        val messages = mutableListOf<MessagesState>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            messagesRepository.observeMessages().toList(messages)
-        }
-        val entities = listOf(
-            MessageEntity(
-                id = "noster",
-                chatId = "alterum",
-                senderId = "posidonium",
-                timestamp = 9171,
-                type = MessageEntity.MessageType.TEXT,
-                status = MessageEntity.MessageStatus.SENDING,
-                text = "persecuti",
-                imageUrl = "https://www.google.com/#q=cursus"
-            )
-        )
-        fakeMessagesDao.flow.emit(entities)
-        val userId = fakeUserInfoRepository.getUserInfo().data
-        val expected = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
-        assertEquals(expected, messages[0])
-        val dto = listOf(
-            MessageDto(
-                id = "delectus",
-                chatId = "inani",
-                senderId = "quidam",
-                timestamp = 6450,
-                type = MessageType.TEXT,
-                status = MessageStatus.SENDING,
-                text = "atomorum",
-                imageUrl = "https://www.google.com/#q=principes"
-            )
-        )
-        fakeMessagesApi.flow.emit(dto)
-        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
-        assertEquals(expected2, messages[1])
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `When loading messages with api error then they come from cache`() = runTest {
-        messagesRepository = MessagesRepositoryImpl(
-            messagesDao = fakeMessagesDao,
-            messagesApi = fakeMessagesApi,
-            userInfoRepository = fakeUserInfoRepository,
-            mapper = mapper,
-            dispatcher = StandardTestDispatcher(testScheduler)
-        )
-        fakeMessagesApi.error = RuntimeException()
+    fun `When loading messages then they come from cache first and then from api`() = runTest(dispatcher) {
         val messages = mutableListOf<MessagesState>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
-        val entities = listOf(
-            MessageEntity(
-                id = "noster",
-                chatId = "alterum",
-                senderId = "posidonium",
-                timestamp = 9171,
-                type = MessageEntity.MessageType.TEXT,
-                status = MessageEntity.MessageStatus.SENDING,
-                text = "persecuti",
-                imageUrl = "https://www.google.com/#q=cursus"
-            )
-        )
+        val entities = getLocalMessages()
         fakeMessagesDao.flow.emit(entities)
-        val userId = fakeUserInfoRepository.getUserInfo().data
+        val userId = fakeUserInfoRepository.getUserInfo().data.userId
+        val expected = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
+        assertEquals(expected, messages[0])
+        val dto = getRemoteMessages()
+        fakeMessagesApi.flow.emit(dto)
+        val expected2 = listOf(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
+        assertEquals(expected2, fakeMessagesDao.updates)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `When loading messages with api error then they come from cache`() = runTest(dispatcher) {
+        fakeMessagesApi.error = RuntimeException()
+        val messages = mutableListOf<MessagesState>()
+        backgroundScope.launch {
+            messagesRepository.observeMessages().toList(messages)
+        }
+        val entities = getLocalMessages()
+        fakeMessagesDao.flow.emit(entities)
+        val userId = fakeUserInfoRepository.getUserInfo().data.userId
         val expected = MessagesState.Error(DomainError.UnknownError, entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected, messages[0])
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `When loading messages from empty cache then from api`() = runTest {
-        messagesRepository = MessagesRepositoryImpl(
-            messagesDao = fakeMessagesDao,
-            messagesApi = fakeMessagesApi,
-            userInfoRepository = fakeUserInfoRepository,
-            mapper = mapper,
-            dispatcher = StandardTestDispatcher(testScheduler)
-        )
+    fun `When loading messages from empty cache then from api`() = runTest(dispatcher) {
         val messages = mutableListOf<MessagesState>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
         fakeMessagesDao.flow.emit(emptyList())
-        val userId = fakeUserInfoRepository.getUserInfo().data
         val expected = MessagesState.Data(emptyList())
         assertEquals(expected, messages[0])
-        val dto = listOf(
-            MessageDto(
-                id = "delectus",
-                chatId = "inani",
-                senderId = "quidam",
-                timestamp = 6450,
-                type = MessageType.TEXT,
-                status = MessageStatus.SENDING,
-                text = "atomorum",
-                imageUrl = "https://www.google.com/#q=principes"
-            )
-        )
+        val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
-        val expected2 = MessagesState.Data(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
-        assertEquals(expected2, messages[1])
+        val expected2 = listOf(dto.map { mapper.toDomain(mapper.toLocal(it), userId) })
+        assertEquals(expected2, fakeMessagesDao.updates)
     }
 
     @Test
-    fun `When post message with success then the result is success`() = runTest {
-        messagesRepository = MessagesRepositoryImpl(
-            messagesDao = fakeMessagesDao,
-            messagesApi = fakeMessagesApi,
-            userInfoRepository = fakeUserInfoRepository,
-            mapper = mapper,
-            dispatcher = StandardTestDispatcher(testScheduler)
-        )
-        val message = TextMessage(
-            id = "possit",
-            chatId = "est",
-            senderId = "tota",
-            timestamp = 7613,
-            status = Message.MessageStatus.SENDING,
-            isMine = false,
-            text = "turpis"
-        )
-        val result = messagesRepository.postMessage(message)
+    fun `When post message with success then the result is success`() = runTest(dispatcher) {
+        val result = messagesRepository.postMessage(getDomainMessage())
         assertEquals(ChatResult.Success(Unit), result)
     }
 
     @Test
-    fun `When post message with error then result is fail`() = runTest {
-        messagesRepository = MessagesRepositoryImpl(
-            messagesDao = fakeMessagesDao,
-            messagesApi = fakeMessagesApi,
-            userInfoRepository = fakeUserInfoRepository,
-            mapper = mapper,
-            dispatcher = StandardTestDispatcher(testScheduler)
-        )
-        val message = TextMessage(
-            id = "possit",
-            chatId = "est",
-            senderId = "tota",
-            timestamp = 7613,
-            status = Message.MessageStatus.SENDING,
-            isMine = false,
-            text = "turpis"
-        )
+    fun `When post message with error then result is fail`() = runTest(dispatcher) {
         fakeMessagesApi.error = RuntimeException()
-        val result = messagesRepository.postMessage(message)
+        val result = messagesRepository.postMessage(getDomainMessage())
         assertEquals(ChatResult.Error(DomainError.UnknownError), result)
     }
 }
 
+private fun getLocalMessages() = listOf(
+    MessageEntity(
+        id = "noster",
+        chatId = "alterum",
+        senderId = "posidonium",
+        timestamp = 9171,
+        type = MessageEntity.MessageType.TEXT,
+        status = MessageEntity.MessageStatus.SENDING,
+        text = "persecuti",
+        imageUrl = "https://www.google.com/#q=cursus"
+    )
+)
+
+private fun getRemoteMessages() = listOf(
+    MessageDto(
+        id = "delectus",
+        chatId = "inani",
+        senderId = "quidam",
+        timestamp = 6450,
+        type = MessageType.TEXT,
+        status = MessageStatus.SENDING,
+        text = "atomorum",
+        imageUrl = "https://www.google.com/#q=principes"
+    )
+)
+
+private fun getDomainMessage() = TextMessage(
+    id = "possit",
+    chatId = "est",
+    senderId = "tota",
+    timestamp = 7613,
+    status = Message.MessageStatus.SENDING,
+    isMine = false,
+    text = "turpis"
+)
+
 private class FakeMessagesDao() : MessagesDao {
+
+    val updates = mutableListOf<List<MessageEntity>>()
 
     val flow = MutableSharedFlow<List<MessageEntity>>()
 
@@ -216,7 +167,9 @@ private class FakeMessagesDao() : MessagesDao {
         return flow
     }
 
-    override suspend fun clearAndInsertMessages(messages: List<MessageEntity>) {}
+    override suspend fun clearAndInsertMessages(messages: List<MessageEntity>) {
+        updates.add(messages)
+    }
 }
 
 private class FakeMessagesApi() : MessagesApi {
