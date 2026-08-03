@@ -164,7 +164,7 @@ private class FakeMessagesDao() : MessagesDao {
 
     val flow = MutableSharedFlow<List<MessageEntity>>()
 
-    override suspend fun observeMessages(): Flow<List<MessageEntity>> {
+    override fun observeMessages(): Flow<List<MessageEntity>> {
         return flow
     }
 
