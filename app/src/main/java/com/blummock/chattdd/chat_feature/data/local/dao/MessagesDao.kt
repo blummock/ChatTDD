@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 internal interface MessagesDao {
 
-    suspend fun observeMessages(): Flow<List<MessageEntity>>
+    fun observeMessages(): Flow<List<MessageEntity>>
 
     suspend fun clearAndInsertMessages(messages: List<MessageEntity>)
 }
