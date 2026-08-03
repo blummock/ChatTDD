@@ -17,7 +17,7 @@ import org.junit.Test
 class ObserveMessagesUseCaseTests {
 
     @Test
-    fun scenario() = runTest {
+    fun `success scenario`() = runTest {
         val repository = FakeMessagesRepository()
         val useCase = ObserveMessagesUseCase(repository)
         val expectedMessages = listOf(
@@ -42,6 +42,15 @@ class ObserveMessagesUseCaseTests {
         )
         repository.messagesFlow = flowOf(MessagesState.Data(expectedMessages))
         assertEquals(MessagesState.Data(expectedMessages), useCase().first())
+        val expectedError = DomainError.UnknownError
+        repository.messagesFlow = flowOf(MessagesState.Error(expectedError))
+        assertEquals(MessagesState.Error(expectedError), useCase().first())
+    }
+
+    @Test
+    fun `fail scenario`() = runTest {
+        val repository = FakeMessagesRepository()
+        val useCase = ObserveMessagesUseCase(repository)
         val expectedError = DomainError.UnknownError
         repository.messagesFlow = flowOf(MessagesState.Error(expectedError))
         assertEquals(MessagesState.Error(expectedError), useCase().first())

@@ -48,7 +48,7 @@ class MessagesRepositoryTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading messages from cache first then from api`() = runTest {
+    fun `When loading messages then they come from cache first and then from api`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,
@@ -96,7 +96,7 @@ class MessagesRepositoryTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading messages with api error but with cache`() = runTest {
+    fun `When loading messages with api error then they come from cache`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,
@@ -129,7 +129,7 @@ class MessagesRepositoryTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `loading messages from empty cache then from api`() = runTest {
+    fun `When loading messages from empty cache then from api`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,
@@ -163,7 +163,7 @@ class MessagesRepositoryTest {
     }
 
     @Test
-    fun `post message success`() = runTest {
+    fun `When post message with success then the result is success`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,
@@ -182,11 +182,10 @@ class MessagesRepositoryTest {
         )
         val result = messagesRepository.postMessage(message)
         assertEquals(ChatResult.Success(Unit), result)
-
     }
 
     @Test
-    fun `post message error`() = runTest {
+    fun `When post message with error then result is fail`() = runTest {
         messagesRepository = MessagesRepositoryImpl(
             messagesDao = fakeMessagesDao,
             messagesApi = fakeMessagesApi,

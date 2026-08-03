@@ -11,7 +11,7 @@ import org.junit.Test
 class UiMapperTests {
 
     @Test
-    fun `map textMessage`() {
+    fun `map TextMessage to TextMessageModel`() {
         val mapper = UiMapper(
             timeConverter = TimeConverter.Base(),
         )
