@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -93,19 +94,22 @@ class MessagesRepositoryTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun `When loading messages from empty cache then from api`() = runTest(dispatcher) {
+    fun `When loading messages and cache is empty then wait load from api`() = runTest(dispatcher) {
         val messages = mutableListOf<MessagesState>()
         backgroundScope.launch {
             messagesRepository.observeMessages().toList(messages)
         }
         fakeMessagesDao.flow.emit(emptyList())
-        val expected = MessagesState.Data(emptyList())
-        assertEquals(expected, messages[0])
+        assertTrue(messages.isEmpty())
         val dto = getRemoteMessages()
         fakeMessagesApi.flow.emit(dto)
+        val expected = listOf(dto.map { mapper.toLocal(it) })
+        assertEquals(expected, fakeMessagesDao.updates)
+        val entities = getLocalMessages()
+        fakeMessagesDao.flow.emit(entities)
         val userId = fakeUserInfoRepository.getUserInfo().data.userId
-        val expected2 = listOf(dto.map { mapper.toLocal(it) })
-        assertEquals(expected2, fakeMessagesDao.updates)
+        val expected2 = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
+        assertEquals(expected2, messages[0])
     }
 
     @Test
