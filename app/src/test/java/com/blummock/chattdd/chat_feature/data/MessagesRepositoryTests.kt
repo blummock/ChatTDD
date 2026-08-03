@@ -110,6 +110,8 @@ class MessagesRepositoryTest {
         val userId = fakeUserInfoRepository.getUserInfo().data.userId
         val expected2 = MessagesState.Data(entities.map { mapper.toDomain(it, userId) })
         assertEquals(expected2, messages[0])
+        fakeMessagesDao.flow.emit(emptyList())
+        assertEquals(MessagesState.Data(emptyList()), messages[1])
     }
 
     @Test
