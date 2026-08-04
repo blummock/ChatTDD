@@ -2,14 +2,14 @@ package com.blummock.chattdd.chat_feature.data
 
 import android.content.Context
 import androidx.room.Room
-import com.blummock.chattdd.chat_feature.core.UserInfo
-import com.blummock.chattdd.chat_feature.core.UserInfoRepository
 import com.blummock.chattdd.chat_feature.data.local.MessagesDatabase
 import com.blummock.chattdd.chat_feature.data.mappers.ExceptionMapper
 import com.blummock.chattdd.chat_feature.data.mappers.MessagesMapper
 import com.blummock.chattdd.chat_feature.data.remote.api.MessagesApiImpl
 import com.blummock.chattdd.chat_feature.data.repositories.MessagesRepositoryImpl
 import com.blummock.chattdd.chat_feature.domain.entity.ChatResult
+import com.blummock.chattdd.chat_feature.domain.entity.UserInfo
+import com.blummock.chattdd.chat_feature.domain.repositories.UserInfoRepository
 import com.blummock.chattdd.chat_feature.domain.use_cases.ObserveMessagesUseCase
 import com.blummock.chattdd.chat_feature.domain.use_cases.SendMessageUseCase
 import kotlinx.coroutines.Dispatchers

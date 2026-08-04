@@ -16,11 +16,10 @@ import com.blummock.chattdd.ui.theme.ChatTDDTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val provider by lazy(LazyThreadSafetyMode.NONE) { (application as App).useCasesProvider }
-
     private val viewModel: ChatViewModel by viewModels {
         viewModelFactory {
             initializer {
+                val provider = (application as App).useCasesProvider
                 ChatViewModel(
                     savedStateHandle = createSavedStateHandle(),
                     observeMessagesUseCase = provider.observeMessagesUseCase(),

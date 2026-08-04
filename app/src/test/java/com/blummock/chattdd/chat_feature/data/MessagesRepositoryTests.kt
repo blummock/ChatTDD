@@ -177,6 +177,14 @@ private class FakeMessagesDao() : MessagesDao {
     override suspend fun clearAndInsertMessages(messages: List<MessageEntity>) {
         updates.add(messages)
     }
+
+    override suspend fun insert(messages: List<MessageEntity>) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteAll() {
+        TODO("Not yet implemented")
+    }
 }
 
 private class FakeMessagesApi() : MessagesApi {
