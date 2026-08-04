@@ -144,17 +144,7 @@ class ChatScreenTests {
     @Test
     fun `When messages are updated and a recently message is visible then list scrolls to the recently message`() {
         val items = 100
-        val messages = List(items) { index ->
-            TextMessage(
-                id = "$index",
-                chatId = "sem",
-                senderId = "persius",
-                timestamp = 8115,
-                status = Message.MessageStatus.DELIVERED,
-                isMine = false,
-                text = "appetere $index"
-            )
-        }
+        val messages = generateMessages(items)
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
@@ -180,17 +170,7 @@ class ChatScreenTests {
     @Test
     fun `When messages are updated and a recently message is invisible then the list remains at the same position`() {
         val items = 100
-        val messages = List(items) { index ->
-            TextMessage(
-                id = "$index",
-                chatId = "sem",
-                senderId = "persius",
-                timestamp = 8115,
-                status = Message.MessageStatus.DELIVERED,
-                isMine = false,
-                text = "appetere $index"
-            )
-        }
+        val messages = generateMessages(items)
         runTest {
             fakeSendMessagesRepository.messages.emit(MessagesState.Data(messages))
         }
@@ -245,6 +225,18 @@ class ChatScreenTests {
         }
         chatScreenPage.assertEmptyListExists()
     }
+}
+
+private fun generateMessages(size: Int) = List(size) { index ->
+    TextMessage(
+        id = "$index",
+        chatId = "sem",
+        senderId = "persius",
+        timestamp = 8115,
+        status = Message.MessageStatus.DELIVERED,
+        isMine = false,
+        text = "appetere $index"
+    )
 }
 
 private class FakeTimeConverter : TimeConverter {

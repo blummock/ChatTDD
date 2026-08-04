@@ -12,14 +12,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 
 class ObserveMessagesUseCaseTests {
 
+    private lateinit var repository:FakeMessagesRepository
+    private lateinit var useCase: ObserveMessagesUseCase
+
+    @Before
+    fun setup() {
+        repository = FakeMessagesRepository()
+        useCase = ObserveMessagesUseCase(repository)
+    }
+
     @Test
     fun `success scenario`() = runTest {
-        val repository = FakeMessagesRepository()
-        val useCase = ObserveMessagesUseCase(repository)
         val expectedMessages = listOf(
             TextMessage(
                 id = "tamquam",
@@ -49,8 +57,6 @@ class ObserveMessagesUseCaseTests {
 
     @Test
     fun `fail scenario`() = runTest {
-        val repository = FakeMessagesRepository()
-        val useCase = ObserveMessagesUseCase(repository)
         val expectedError = DomainError.UnknownError
         repository.messagesFlow = flowOf(MessagesState.Error(expectedError))
         assertEquals(MessagesState.Error(expectedError), useCase().first())

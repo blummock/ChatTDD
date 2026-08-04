@@ -64,26 +64,7 @@ class ChatViewModelTests {
 
     @Test
     fun `When viewModel inits then state is loading and when loading is success then get messages`() = runTest {
-        val listOfMessages = listOf(
-            TextMessage(
-                id = "delectus",
-                chatId = "mediocrem",
-                senderId = "nascetur",
-                timestamp = 1780457123,
-                status = Message.MessageStatus.DELIVERED,
-                isMine = false,
-                text = "ignota"
-            ),
-            TextMessage(
-                id = "habitasse",
-                chatId = "dignissim",
-                senderId = "meliore",
-                timestamp = 1780457123,
-                status = Message.MessageStatus.SENDING,
-                isMine = true,
-                text = "tale"
-            )
-        )
+        val listOfMessages = createListOfMessages()
         assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
         messagesRepository.messagesState.emit(MessagesState.Data(listOfMessages))
         val expected = listOfMessages.map { mapper.toUi(it) }
@@ -92,26 +73,7 @@ class ChatViewModelTests {
 
     @Test
     fun `When messages list updates then the viewModels has updated list`() = runTest {
-        val listOfMessages = listOf(
-            TextMessage(
-                id = "delectus",
-                chatId = "mediocrem",
-                senderId = "nascetur",
-                timestamp = 1780457123,
-                status = Message.MessageStatus.DELIVERED,
-                isMine = false,
-                text = "ignota"
-            ),
-            TextMessage(
-                id = "habitasse",
-                chatId = "dignissim",
-                senderId = "meliore",
-                timestamp = 1780457123,
-                status = Message.MessageStatus.SENDING,
-                isMine = true,
-                text = "tale"
-            )
-        )
+        val listOfMessages = createListOfMessages()
         assertEquals("initial", MessagesUiState.Loading, viewModel.state.value.messagesUiState)
         messagesRepository.messagesState.emit(MessagesState.Data(listOfMessages))
         var expected = listOfMessages.map { mapper.toUi(it) }
@@ -211,6 +173,27 @@ class ChatViewModelTests {
         assertEquals(testText, viewModel.state.value.messageInput)
     }
 }
+
+private fun createListOfMessages() = listOf(
+    TextMessage(
+        id = "delectus",
+        chatId = "mediocrem",
+        senderId = "nascetur",
+        timestamp = 1780457123,
+        status = Message.MessageStatus.DELIVERED,
+        isMine = false,
+        text = "ignota"
+    ),
+    TextMessage(
+        id = "habitasse",
+        chatId = "dignissim",
+        senderId = "meliore",
+        timestamp = 1780457123,
+        status = Message.MessageStatus.SENDING,
+        isMine = true,
+        text = "tale"
+    )
+)
 
 private class FakeTimeConverter : TimeConverter {
     override fun toHHmm(millis: Long) = millis.toString()

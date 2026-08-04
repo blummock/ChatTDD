@@ -11,14 +11,22 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
 import org.junit.Test
 
 class SendMessageUseCaseTests {
 
-    @Test
-    fun `success scenario`() = runTest {
+    private lateinit var repository: FakeMessagesRepository
+    private lateinit var useCase: SendMessageUseCase
+
+    @Before
+    fun setup() {
         val repository = FakeMessagesRepository()
         val useCase = SendMessageUseCase(repository)
+    }
+
+    @Test
+    fun `success scenario`() = runTest {
         val message = TextMessage(
             id = "tamquam",
             chatId = "nonumy",
@@ -35,8 +43,6 @@ class SendMessageUseCaseTests {
 
     @Test
     fun `fail scenario`() = runTest {
-        val repository = FakeMessagesRepository()
-        val useCase = SendMessageUseCase(repository)
         val message = TextMessage(
             id = "tamquam",
             chatId = "nonumy",
