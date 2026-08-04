@@ -14,9 +14,11 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import java.io.IOException
-import java.time.ZonedDateTime
 import java.util.UUID
 import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 internal class MessagesApiImpl : MessagesApi {
 
@@ -24,18 +26,19 @@ internal class MessagesApiImpl : MessagesApi {
 
     @OptIn(FlowPreview::class)
     override fun observeMessages(): Flow<List<MessageDto>> = flow{
-        delay(1000)
+        delay(1000.milliseconds)
         emitAll(store.asStateFlow())
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun postMessage(message: MessageRequest): SendMessageResponse {
         if (Random.nextBoolean()) throw IOException()
-        delay(200)
+        delay(200.milliseconds)
         val newMessage = MessageDto(
             id = UUID.randomUUID().toString(),
             chatId = UUID.randomUUID().toString(),
             senderId = "suavitate",
-            timestamp = ZonedDateTime.now().toInstant().epochSecond,
+            timestamp = Clock.System.now().toEpochMilliseconds(),
             type = MessageType.TEXT,
             status = MessageStatus.SENDING,
             text = message.text,

@@ -13,6 +13,7 @@ import com.blummock.chattdd.chat_feature.presentation.ui.ChatScreen
 import com.blummock.chattdd.chat_feature.presentation.vm.ChatViewModel
 import com.blummock.chattdd.chat_feature.presentation.vm.state.UiMapper
 import com.blummock.chattdd.ui.theme.ChatTDDTheme
+import kotlinx.datetime.TimeZone
 
 class MainActivity : ComponentActivity() {
 
@@ -24,7 +25,7 @@ class MainActivity : ComponentActivity() {
                     savedStateHandle = createSavedStateHandle(),
                     observeMessagesUseCase = provider.observeMessagesUseCase(),
                     sendMessageUseCase = provider.sendMessageUseCase(),
-                    uiMapper = UiMapper(TimeConverter.Base())
+                    uiMapper = UiMapper(TimeConverter.Base(TimeZone.currentSystemDefault()))
                 )
             }
         }
