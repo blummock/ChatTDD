@@ -21,8 +21,8 @@ class SendMessageUseCaseTests {
 
     @Before
     fun setup() {
-        val repository = FakeMessagesRepository()
-        val useCase = SendMessageUseCase(repository)
+        repository = FakeMessagesRepository()
+        useCase = SendMessageUseCase(repository)
     }
 
     @Test
